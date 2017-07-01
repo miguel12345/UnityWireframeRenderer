@@ -1,4 +1,4 @@
-﻿Shader "Wireframe/Cull"
+﻿Shader "Wireframe/NoCull"
 {
 	Properties
 	{
@@ -14,6 +14,7 @@
 		Pass
 		{
 			Blend SrcAlpha OneMinusSrcAlpha
+			Cull Front
 
 			CGPROGRAM
 			#include "UnityCG.cginc"
@@ -22,5 +23,18 @@
 			#pragma fragment frag
 			ENDCG
 		}
+		
+		Pass
+        {
+            Blend SrcAlpha OneMinusSrcAlpha
+            Cull Back
+
+            CGPROGRAM
+			#include "UnityCG.cginc"
+			#include "WireframeBarycentricCoordinatesCore.cginc"
+            #pragma vertex vert
+            #pragma fragment frag
+            ENDCG
+        }
 	}
 }

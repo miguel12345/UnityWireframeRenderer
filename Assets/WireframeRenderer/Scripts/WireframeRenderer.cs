@@ -5,12 +5,20 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class WireframeRenderer : MonoBehaviour
 {
+	public bool ShowBackFaces;
+	public Color LineColor = Color.black;
+	
 	[SerializeField,HideInInspector]
 	private Renderer originalRenderer;
 	[SerializeField,HideInInspector]
 	private Mesh processedMesh;
 	[SerializeField,HideInInspector]
 	private MeshRenderer wireframeRenderer;
+
+	[SerializeField,HideInInspector]
+	private Material wireframeMaterialCull;
+	[SerializeField,HideInInspector]
+	private Material wireframeMaterialNoCull;
 	
 	void Awake()
 	{
@@ -65,12 +73,42 @@ public class WireframeRenderer : MonoBehaviour
 
 		wireframeGO.AddComponent<MeshFilter>().mesh = processedMesh;
 		wireframeRenderer = wireframeGO.AddComponent<MeshRenderer>();
-		wireframeRenderer.material = CreateWireframeMaterial();
+		
+		CreateMaterials();
+		UpdateWireframeRendererMaterial();
+		UpdateLineColor();
+	}
+	
+	void OnValidate()
+	{
+		if (wireframeRenderer == null) return;
+		UpdateWireframeRendererMaterial();
+		UpdateLineColor();
 	}
 
-	Material CreateWireframeMaterial()
+	void CreateMaterials()
 	{
-		var shader = Shader.Find("Custom/Wireframe/BarycentricCoordinates");
+		if (wireframeMaterialNoCull == null)
+		{
+			wireframeMaterialNoCull = CreateWireframeMaterial(false);
+			wireframeMaterialCull = CreateWireframeMaterial(true);
+		}
+	}
+
+	void UpdateWireframeRendererMaterial()
+	{
+		wireframeRenderer.material = ShowBackFaces ? wireframeMaterialNoCull:wireframeMaterialCull;
+	}
+
+	void UpdateLineColor()
+	{	
+		wireframeRenderer.sharedMaterial.SetColor("_LineColor",LineColor);
+	}
+
+	Material CreateWireframeMaterial(bool cull)
+	{
+		var shaderLastName = cull ? "Cull" : "NoCull";
+		var shader = Shader.Find("Wireframe/"+shaderLastName);
 		var material = new Material(shader);
 		return material;
 	}
