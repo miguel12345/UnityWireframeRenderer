@@ -3,7 +3,7 @@
 	Properties
 	{
 	    _LineColor ("Line color", Color) = (0, 0, 0, 1)
-	    _LineSize ("Line size", float) = 1
+	    _LineSize ("Line size", float) = 0.3
 	}
 	
 	SubShader
@@ -15,6 +15,7 @@
 		{
 			Blend SrcAlpha OneMinusSrcAlpha
 			Cull Front
+			ZWrite Off
 
 			CGPROGRAM
 			#include "UnityCG.cginc"
@@ -28,7 +29,8 @@
         {
             Blend SrcAlpha OneMinusSrcAlpha
             Cull Back
-
+			ZWrite Off
+			
             CGPROGRAM
 			#include "UnityCG.cginc"
 			#include "WireframeBarycentricCoordinatesCore.cginc"

@@ -4,13 +4,13 @@ float _LineSize;
 struct appdata
 {
     float4 vertex : POSITION;
+    float3 normal : NORMAL;
     float2 uv : TEXCOORD0;
 };
 
 struct v2f
 {
     float2 uv : TEXCOORD0;
-    UNITY_FOG_COORDS(1)
     float4 vertex : SV_POSITION;
 };
 
@@ -18,6 +18,14 @@ v2f vert (appdata v)
 {
     v2f o;
     o.vertex = UnityObjectToClipPos(v.vertex);
+    //If we are rendering in shaded mode (showing the original mesh renderer)
+    //we want to ensure that the wireframe-processed mesh appears "on top" of
+    //the original mesh. We achieve this by slightly decreasing the z component
+    //(making the vertex closer to the camera) without actually changing its screen space position
+    //since the w component remains the same, and thus, after w division, the x and y components
+    //won't be affected by our "trick".
+    //So, in essence, this just changes the value that gets written to the Z-Buffer
+    o.vertex.z -= 0.001;
     o.uv = v.uv;
     return o;
 }

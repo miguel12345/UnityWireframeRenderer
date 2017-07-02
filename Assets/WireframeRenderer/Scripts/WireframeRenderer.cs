@@ -7,6 +7,7 @@ public class WireframeRenderer : MonoBehaviour
 {
 	public bool ShowBackFaces;
 	public Color LineColor = Color.black;
+	public bool Shaded;
 	
 	[SerializeField,HideInInspector]
 	private Renderer originalRenderer;
@@ -70,13 +71,13 @@ public class WireframeRenderer : MonoBehaviour
 		var wireframeGO = new GameObject("Wireframe renderer");
 		wireframeGO.transform.SetParent(originalRenderer.transform);
 		wireframeGO.transform.localPosition = Vector3.zero;
+		wireframeGO.transform.localRotation = Quaternion.identity;
 
 		wireframeGO.AddComponent<MeshFilter>().mesh = processedMesh;
 		wireframeRenderer = wireframeGO.AddComponent<MeshRenderer>();
 		
 		CreateMaterials();
-		UpdateWireframeRendererMaterial();
-		UpdateLineColor();
+		OnValidate();
 	}
 	
 	void OnValidate()
@@ -84,6 +85,7 @@ public class WireframeRenderer : MonoBehaviour
 		if (wireframeRenderer == null) return;
 		UpdateWireframeRendererMaterial();
 		UpdateLineColor();
+		UpateShaded();
 	}
 
 	void CreateMaterials()
@@ -103,6 +105,11 @@ public class WireframeRenderer : MonoBehaviour
 	void UpdateLineColor()
 	{	
 		wireframeRenderer.sharedMaterial.SetColor("_LineColor",LineColor);
+	}
+
+	void UpateShaded()
+	{
+		originalRenderer.enabled = Shaded;
 	}
 
 	Material CreateWireframeMaterial(bool cull)

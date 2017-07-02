@@ -3,7 +3,7 @@
 	Properties
 	{
 	    _LineColor ("Line color", Color) = (0, 0, 0, 1)
-	    _LineSize ("Line size", float) = 1
+	    _LineSize ("Line size", float) = 0.3
 	}
 	
 	SubShader
@@ -14,6 +14,7 @@
 		Pass
 		{
 			Blend SrcAlpha OneMinusSrcAlpha
+			ZWrite Off
 
 			CGPROGRAM
 			#include "UnityCG.cginc"
