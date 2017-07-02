@@ -6,7 +6,7 @@ Get a beautiful cross-platform wireframe renderer for your models in just one cl
 ![](skinnedMeshRendererExample.gif)
 
 
-##Features
+## Features
 + Supports MeshRenderer and SkinnedMeshRenderer
 + Customize line color and size
 + Option to show back faces (culling on/off)
