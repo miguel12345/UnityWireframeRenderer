@@ -1,5 +1,5 @@
 # UnityWireframeRenderer
-Get a beautiful cross-platform wireframe renderer for your models in just one click
+Get a beautiful cross-platform wireframe renderer for your meshes in just one click
 
 ![](meshRendererExample.gif)
 
