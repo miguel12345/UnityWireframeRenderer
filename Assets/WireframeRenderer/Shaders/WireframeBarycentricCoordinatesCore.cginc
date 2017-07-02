@@ -85,5 +85,7 @@ fixed4 frag (v2f i) : SV_Target
 
     float lineAlpha = 1.0 - smoothstep(1.0,1.0 + (lineAntiaAliasWidthInPixels/lineWidthInPixels),closestNormalizedDistance);
 
+    lineAlpha *= _LineColor.a;
+    
     return fixed4(_LineColor.rgb,lineAlpha);
 }

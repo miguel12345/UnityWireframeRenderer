@@ -15,7 +15,7 @@ Get a beautiful cross-platform wireframe renderer for your models in just one cl
 + Add the `WireframeRenderer` component in Editor mode for zero runtime setup costs
 
 ## Instructions
-
-Add the `WireFrameRenderer` component to any Game Object with a (Skinned)MeshRenderer inside it.
++ Import the `packages/UnityWireframeRenderer.package`
++ Add the `WireFrameRenderer` component to any Game Object with a (Skinned)MeshRenderer inside it.
 
 ![](instructions.png)
