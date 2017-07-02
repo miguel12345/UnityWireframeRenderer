@@ -14,13 +14,22 @@ public class WireframeRenderer : MonoBehaviour
 	[SerializeField,HideInInspector]
 	private Mesh processedMesh;
 	[SerializeField,HideInInspector]
-	private MeshRenderer wireframeRenderer;
+	private Renderer wireframeRenderer;
 
 	[SerializeField,HideInInspector]
 	private Material wireframeMaterialCull;
 	[SerializeField,HideInInspector]
 	private Material wireframeMaterialNoCull;
+
+	[SerializeField,HideInInspector]
+	private RendererType originalRendererType;
 	
+	enum RendererType
+	{	
+		MeshRenderer,
+		SkinnedMeshRenderer
+	}
+
 	void Awake()
 	{
 		Validate();
@@ -45,41 +54,73 @@ public class WireframeRenderer : MonoBehaviour
 
 	void Validate()
 	{
-		if (wireframeRenderer != null)
+		if (wireframeRenderer == null)
 		{	
-			//If the wireframe rendere is not null at this point, it means that everything is already setup
-			return;
+			Mesh originalMesh = null;
+
+			var meshFilter = GetComponentInChildren<MeshFilter>();
+			if (meshFilter != null)
+			{
+				originalMesh = meshFilter.sharedMesh;
+				originalRendererType = RendererType.MeshRenderer;
+				originalRenderer = meshFilter.GetComponent<Renderer>();
+			}
+
+			if (originalMesh == null)
+			{
+				var skinnedMeshRenderer = GetComponentInChildren<SkinnedMeshRenderer>();
+
+				if (skinnedMeshRenderer != null)
+				{
+					originalMesh = skinnedMeshRenderer.sharedMesh;
+					originalRendererType = RendererType.SkinnedMeshRenderer;
+					originalRenderer = skinnedMeshRenderer;
+				}
+			}
+
+			if (originalMesh == null)
+			{	
+				Debug.Log("Wireframe renderer requires a MeshRenderer or a SkinnedMeshRenderer in the same gameobject or in one of its children");
+				enabled = false;
+				return;
+			}
+
+			processedMesh = GetProcessedMesh(originalMesh);
+
+			if (processedMesh == null)
+			{
+				return;
+			}
+			
+			CreateWireframeRenderer();
+			CreateMaterials();
 		}
+		
+		OnValidate();
+	}
 
-		var meshFilter = GetComponentInChildren<MeshFilter>();
-
-		if (meshFilter == null)
-		{	
-			Debug.Log("Wireframe renderer requires a mesh filter in its gameobject or in one of its children");
-			enabled = false;
-			return;
-		}
-
-		originalRenderer = meshFilter.GetComponent<Renderer>();
-		processedMesh = GetProcessedMesh(meshFilter.sharedMesh);
-
-		if (processedMesh == null)
-		{
-			return;
-		}
-
+	void CreateWireframeRenderer()
+	{
 		var wireframeGO = new GameObject("Wireframe renderer");
 		wireframeGO.transform.SetParent(originalRenderer.transform);
 		wireframeGO.transform.localPosition = Vector3.zero;
 		wireframeGO.transform.localRotation = Quaternion.identity;
 
-		wireframeGO.AddComponent<MeshFilter>().mesh = processedMesh;
-		wireframeRenderer = wireframeGO.AddComponent<MeshRenderer>();
-		
-		CreateMaterials();
-		OnValidate();
+		if (originalRendererType == RendererType.MeshRenderer)
+		{
+			wireframeGO.AddComponent<MeshFilter>().mesh = processedMesh;
+			wireframeRenderer = wireframeGO.AddComponent<MeshRenderer>();
+		}
+		else
+		{
+			var originalSkinnedMeshRenderer = (SkinnedMeshRenderer) originalRenderer;
+			var wireframeSkinnedMeshRenderer = wireframeGO.AddComponent<SkinnedMeshRenderer>();
+			wireframeSkinnedMeshRenderer.bones = originalSkinnedMeshRenderer.bones;
+			wireframeSkinnedMeshRenderer.sharedMesh = processedMesh;
+			wireframeRenderer = wireframeSkinnedMeshRenderer;
+		}
 	}
-	
+
 	void OnValidate()
 	{
 		if (wireframeRenderer == null) return;
@@ -126,6 +167,8 @@ public class WireframeRenderer : MonoBehaviour
 		{
 			originalRenderer.enabled = false;
 			wireframeRenderer.enabled = true;
+			
+			OnValidate();
 		}
 	}
 
@@ -144,6 +187,7 @@ public class WireframeRenderer : MonoBehaviour
 		var meshTriangles = mesh.triangles;
 		var meshVertices = mesh.vertices;
 		var meshNormals = mesh.normals;
+		var boneWeights = mesh.boneWeights;
 		
 		var numberOfVerticesRequiredForTheProcessedMesh = meshTriangles.Length;
 		if (numberOfVerticesRequiredForTheProcessedMesh > maximumNumberOfVertices)
@@ -158,6 +202,7 @@ public class WireframeRenderer : MonoBehaviour
 		var processedUVs = new Vector2[numberOfVerticesRequiredForTheProcessedMesh];
 		var processedTriangles = new int[meshTriangles.Length];
 		var processedNormals = new Vector3[numberOfVerticesRequiredForTheProcessedMesh];
+		var processedBoneWeigths = new BoneWeight[numberOfVerticesRequiredForTheProcessedMesh]; //The size of the array is either the same as vertexCount or empty.
 		
 		for (var i = 0; i < meshTriangles.Length; i+=3)
 		{
@@ -176,12 +221,21 @@ public class WireframeRenderer : MonoBehaviour
 			processedNormals[i] = meshNormals[meshTriangles[i]];
 			processedNormals[i+1] = meshNormals[meshTriangles[i+1]];
 			processedNormals[i+2] = meshNormals[meshTriangles[i+2]];
+
+			if (processedBoneWeigths.Length > 0)
+			{
+				processedBoneWeigths[i] = boneWeights[meshTriangles[i]];
+				processedBoneWeigths[i+1] = boneWeights[meshTriangles[i+1]];
+				processedBoneWeigths[i+2] = boneWeights[meshTriangles[i+2]];
+			}
 		}
 
 		processedMesh.vertices = processedVertices;
 		processedMesh.uv = processedUVs;
 		processedMesh.triangles = processedTriangles;
 		processedMesh.normals = processedNormals;
+		processedMesh.bindposes = mesh.bindposes;
+		processedMesh.boneWeights = processedBoneWeigths;
 
 		return processedMesh;
 	}
