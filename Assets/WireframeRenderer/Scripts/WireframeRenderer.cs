@@ -102,9 +102,7 @@ public class WireframeRenderer : MonoBehaviour
 	void CreateWireframeRenderer()
 	{
 		var wireframeGO = new GameObject("Wireframe renderer");
-		wireframeGO.transform.SetParent(originalRenderer.transform);
-		wireframeGO.transform.localPosition = Vector3.zero;
-		wireframeGO.transform.localRotation = Quaternion.identity;
+		wireframeGO.transform.SetParent(originalRenderer.transform,false);
 
 		if (originalRendererType == RendererType.MeshRenderer)
 		{
@@ -202,7 +200,9 @@ public class WireframeRenderer : MonoBehaviour
 		var processedUVs = new Vector2[numberOfVerticesRequiredForTheProcessedMesh];
 		var processedTriangles = new int[meshTriangles.Length];
 		var processedNormals = new Vector3[numberOfVerticesRequiredForTheProcessedMesh];
-		var processedBoneWeigths = new BoneWeight[numberOfVerticesRequiredForTheProcessedMesh]; //The size of the array is either the same as vertexCount or empty.
+
+		var boneWeigthsArraySize = (boneWeights.Length > 0) ? numberOfVerticesRequiredForTheProcessedMesh : 0;
+		var processedBoneWeigths = new BoneWeight[boneWeigthsArraySize]; //The size of the array is either the same as vertexCount or empty.
 		
 		for (var i = 0; i < meshTriangles.Length; i+=3)
 		{
