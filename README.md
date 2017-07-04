@@ -21,6 +21,16 @@ Get a beautiful cross-platform wireframe renderer for your meshes in just one cl
 ![](instructions.png)
 
 
+## Couldn't we just use a geometry shader?
+
+Yes, and that is the best solution both int performance and memory usage, but according to the [documentation](https://docs.unity3d.com/Manual/SL-ShaderCompileTargets.html), geometry shaders require the target shader model 4.0, which is not supported in some platforms:
+
+### pragma target 4.0
++ DX11 shader model 4.0.
++ Not supported on DX9, DX11 9.x (WinPhone), OpenGL ES 2.0/3.0/3.1, Metal.
++ Supported on DX11+, OpenGL 3.2+, OpenGL ES 3.1+AEP, Vulkan, PS4/XB1 consoles.
++ Has geometry shaders and everything that es3.0 target has.
+
 ## Implementation
 
 Every mesh is made out of triangles. This is what a triangle looks like:
@@ -97,4 +107,63 @@ also known as the tangent vector.
 
 By thinking in terms of derivative vectors, instead of scalar values, we get an accurate measure of how the `u` component changes per fragment.
 
-###Work in progress
+By knowing the rate of change for the `u` component per fragment, we know by extension the maximum distance to the `(0,0) -> (0,1)` edge for a given line size.
+
+```
+float lineWidthInPixels = _LineSize;
+
+float2 uVector = float2(ddx(i.uv.x),ddy(i.uv.x)); 
+
+float vLength = length(uVector);
+
+float maximumUDistance = lineWidthInPixels * vLength;
+
+float leftEdgeUDistance = i.uv.x;
+float rightEdgeUDistance = (1.0-leftEdgeUDistance);
+    
+float minimumUDistance = min(leftEdgeUDistance,rightEdgeUDistance);
+```
+
+We then calculate the normalized `uDistance` in relation to the `maximumUDistance`
+
+``` 
+float normalizedUDistance = minimumUDistance / maximumUDistance;
+```
+
+if `normalizedUDistance` is `<= 1.0` it means it is part of the left edge covered by the line with the size we want.
+
+The same concept is applied to the `v` vector and the "diagonal vector".
+
+```
+float2 uVector = float2(ddx(i.uv.x),ddy(i.uv.x)); //also known as tangent vector
+float2 vVector = float2(ddx(i.uv.y),ddy(i.uv.y)); //also known as binormal vector
+
+float vLength = length(uVector);
+float uLength = length(vVector);
+float uvDiagonalLength = length(uVector+vVector);
+```
+
+and in the end we get the minimum distance to the closest edge
+
+```
+float closestNormalizedDistance = min(normalizedUDistance,normalizedVDistance);
+closestNormalizedDistance = min(closestNormalizedDistance,normalizedUVDiagonalDistance);
+```
+
+And we decide whether or not to fill the pixel by setting is alpha value between 0.0 and 1.0
+
+```
+float lineAlpha = 1.0 - step(1.0, closestNormalizedDistance);
+```
+
+This works but we end up with a visible aliasing artifact, so we use a smooth transition instead
+
+```
+float lineAlpha = 1.0 - smoothstep(1.0,1.0 + (lineAntiaAliasWidthInPixels/lineWidthInPixels),closestNormalizedDistance);
+```
+
+The main problem with this approach is that we need to preprocess the mesh to ensure that all of its triangles match the one depicted at the beginning of this section:
+
+![](implementation1.png)
+
+This implies that all vertices inside each triangle must have a different uv coordinate. This property can be a pain to guarantee in a mesh with vertices shared between multiple triangles, so, our current solution (of which I'm not very proud of), is just to clone the mesh and recreate the topology to ensure that no vertices are shared between multiple triangles. In some cases, this means that we will have several duplicates of a single vertex.
