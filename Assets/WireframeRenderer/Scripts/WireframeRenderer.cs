@@ -35,6 +35,12 @@ public class WireframeRenderer : MonoBehaviour
 		Validate();
 	}
 
+	public void SetMeshDirty()
+	{
+		processedMesh = GetProcessedMesh(GetOriginalMesh());
+		UpdateWireframeRendererMesh();
+	}
+
 	private void OnDestroy()
 	{
 		if (wireframeRenderer != null)
@@ -97,6 +103,30 @@ public class WireframeRenderer : MonoBehaviour
 		}
 		
 		OnValidate();
+	}
+
+	Mesh GetOriginalMesh()
+	{
+		if (originalRenderer is MeshRenderer)
+		{
+			return originalRenderer.GetComponent<MeshFilter>().mesh;
+		}
+		else
+		{
+			return ((SkinnedMeshRenderer) wireframeRenderer).sharedMesh;
+		}
+	}
+
+	void UpdateWireframeRendererMesh()
+	{
+		if (wireframeRenderer is MeshRenderer)
+		{
+			wireframeRenderer.gameObject.GetComponent<MeshFilter>().mesh = processedMesh;
+		}
+		else
+		{
+			((SkinnedMeshRenderer) wireframeRenderer).sharedMesh = processedMesh;
+		}
 	}
 
 	void CreateWireframeRenderer()
