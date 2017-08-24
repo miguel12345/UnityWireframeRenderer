@@ -60,6 +60,7 @@ public class WireframeRenderer : MonoBehaviour
 
 	void Validate()
 	{
+		CreateMaterials();
 		if (wireframeRenderer == null)
 		{	
 			Mesh originalMesh = null;
@@ -99,7 +100,6 @@ public class WireframeRenderer : MonoBehaviour
 			}
 			
 			CreateWireframeRenderer();
-			CreateMaterials();
 		}
 		
 		OnValidate();
@@ -162,6 +162,10 @@ public class WireframeRenderer : MonoBehaviour
 		if (wireframeMaterialNoCull == null)
 		{
 			wireframeMaterialNoCull = CreateWireframeMaterial(false);
+		}
+		
+		if (wireframeMaterialCull == null)
+		{
 			wireframeMaterialCull = CreateWireframeMaterial(true);
 		}
 	}
