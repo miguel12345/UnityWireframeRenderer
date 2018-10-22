@@ -225,8 +225,10 @@ public class WireframeRenderer : MonoBehaviour
 
         var numberOfVerticesRequiredForTheProcessedMesh = meshTriangles.Length;
 		if (numberOfVerticesRequiredForTheProcessedMesh > maximumNumberOfVertices16Bit)
-		{	          
-            processedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; //Change mesh to 32-bit index format to support more vertices
+		{
+            // Change mesh to 32-bit index format to support more vertices
+            // Might not work on all platforms, for more info check: https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html
+            processedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; 
         }
 		
 		var processedVertices = new Vector3[numberOfVerticesRequiredForTheProcessedMesh];
