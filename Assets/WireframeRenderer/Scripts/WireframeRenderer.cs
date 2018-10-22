@@ -215,20 +215,21 @@ public class WireframeRenderer : MonoBehaviour
 
 	Mesh GetProcessedMesh(Mesh mesh)
 	{
-		var maximumNumberOfVertices = 65534; //Since unity uses a 16-bit indices, not sure if this is still the case. http://answers.unity3d.com/questions/255405/vertex-limit.html
+		var maximumNumberOfVertices16Bit = 65534; //16-bit indices limit
 		var meshTriangles = mesh.triangles;
 		var meshVertices = mesh.vertices;
 		var meshNormals = mesh.normals;
 		var boneWeights = mesh.boneWeights;
-		
-		var numberOfVerticesRequiredForTheProcessedMesh = meshTriangles.Length;
-		if (numberOfVerticesRequiredForTheProcessedMesh > maximumNumberOfVertices)
-		{	
-			Debug.LogError("Wireframe renderer can't safely create the processed mesh it needs because the resulting number of vertices would surpass unity vertex limit!");
-			return null;
-		}
 
-		var processedMesh = new Mesh();
+        var processedMesh = new Mesh();
+
+        var numberOfVerticesRequiredForTheProcessedMesh = meshTriangles.Length;
+		if (numberOfVerticesRequiredForTheProcessedMesh > maximumNumberOfVertices16Bit)
+		{
+            // Change mesh to 32-bit index format to support more vertices
+            // Might not work on all platforms, for more info check: https://docs.unity3d.com/ScriptReference/Mesh-indexFormat.html
+            processedMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32; 
+        }
 		
 		var processedVertices = new Vector3[numberOfVerticesRequiredForTheProcessedMesh];
 		var processedUVs = new Vector2[numberOfVerticesRequiredForTheProcessedMesh];
